@@ -735,7 +735,7 @@ func parsePublicKey(algo PublicKeyAlgorithm, keyData *publicKeyInfo) (interface{
 		}
 
 		if p.N.Sign() <= 0 {
-			return nil, errors.New("x509: RSA modulus is not a positive number")
+			p.N.Abs(p.N)
 		}
 		if p.E <= 0 {
 			return nil, errors.New("x509: RSA public exponent is not a positive number")
@@ -869,7 +869,8 @@ func parseCertificate(in *certificate) (*Certificate, error) {
 	}
 
 	if in.TBSCertificate.SerialNumber.Sign() < 0 {
-		return nil, errors.New("x509: negative serial number")
+		in.TBSCertificate.SerialNumber.Abs(in.TBSCertificate.SerialNumber)
+	//	return nil, errors.New("x509: negative serial number")
 	}
 
 	out.Version = in.TBSCertificate.Version + 1
