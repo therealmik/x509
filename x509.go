@@ -1088,9 +1088,9 @@ func parseCertificate(in *certificate) (*Certificate, error) {
 			}
 		}
 
-		if e.Critical {
-			return out, UnhandledCriticalExtension{}
-		}
+		//if e.Critical {
+		//	return out, UnhandledCriticalExtension{}
+		//}
 	}
 
 	return out, nil
