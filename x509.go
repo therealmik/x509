@@ -735,7 +735,7 @@ func parsePublicKey(algo PublicKeyAlgorithm, keyData *publicKeyInfo) (interface{
 		}
 
 		if p.N.Sign() <= 0 {
-			p.N.Abs(p.N)
+			return nil, errors.New("x509: RSA modulus is not a positive number")
 		}
 		if p.E <= 0 {
 			return nil, errors.New("x509: RSA public exponent is not a positive number")
@@ -868,10 +868,10 @@ func parseCertificate(in *certificate) (*Certificate, error) {
 		return nil, err
 	}
 
-	if in.TBSCertificate.SerialNumber.Sign() < 0 {
-		in.TBSCertificate.SerialNumber.Abs(in.TBSCertificate.SerialNumber)
+	//if in.TBSCertificate.SerialNumber.Sign() < 0 {
+	//	in.TBSCertificate.SerialNumber.Abs(in.TBSCertificate.SerialNumber)
 	//	return nil, errors.New("x509: negative serial number")
-	}
+	//}
 
 	out.Version = in.TBSCertificate.Version + 1
 	out.SerialNumber = in.TBSCertificate.SerialNumber
@@ -956,15 +956,15 @@ func parseCertificate(in *certificate) (*Certificate, error) {
 					return nil, err
 				}
 
-				if len(constraints.Excluded) > 0 && e.Critical {
-					return out, UnhandledCriticalExtension{}
-				}
+				//if len(constraints.Excluded) > 0 && e.Critical {
+				//	return out, UnhandledCriticalExtension{}
+				//}
 
 				for _, subtree := range constraints.Permitted {
 					if len(subtree.Name) == 0 {
-						if e.Critical {
-							return out, UnhandledCriticalExtension{}
-						}
+						//if e.Critical {
+						//	return out, UnhandledCriticalExtension{}
+						//}
 						continue
 					}
 					out.PermittedDNSDomains = append(out.PermittedDNSDomains, subtree.Name)
