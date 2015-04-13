@@ -1,20 +1,24 @@
 package main
 
 import (
-	"encoding/json"
 	"bufio"
-	"github.com/therealmik/x509"
+	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"encoding/pem"
 	"flag"
+	"github.com/therealmik/x509"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 )
 
 var csv = flag.Bool("csv", false, "Data is in csv format")
 var csvColumn = flag.Int("column", 1, "CSV column (0 is first)")
+var es = flag.Bool("es", false, "Send the data to ElasticSearch")
+var esUrl = flag.String("esurl", "http://localhost:9200/ct/certificates/", "URL pointing to the elastic search index and type")
 
 func main() {
 	log.SetOutput(os.Stderr)
@@ -25,7 +29,11 @@ func main() {
 
 	ch := make(chan []byte)
 
-	go printCertificates(ch)
+	if *es {
+		go elasticSearchPut(ch)
+	} else {
+		go printCertificates(ch)
+	}
 	for _, filename := range flag.Args() {
 		log.Print("Loading certificates from ", filename)
 		if *csv {
@@ -94,5 +102,32 @@ func printCertificates(ch <-chan []byte) {
 		}
 		b = append(b, 0xa)
 		os.Stdout.Write(b)
+	}
+}
+
+func elasticSearchPut(ch <-chan []byte) {
+	for blob := range ch {
+		cert, err := x509.ParseCertificate(blob)
+		if err != nil {
+			log.Printf("Error in cert %v: %s", err, base64.StdEncoding.EncodeToString(blob))
+			continue
+		}
+
+		jsonData, err := json.Marshal(cert)
+		if err != nil {
+			log.Panic(err)
+		}
+
+		client := &http.Client{}
+		response, err := client.Post(*esUrl, "application/json", bytes.NewBuffer(jsonData))
+		if err != nil {
+			log.Fatal(err)
+		}
+		_, err = ioutil.ReadAll(response.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Print(response.Status)
+		response.Body.Close()
 	}
 }
