@@ -22,7 +22,7 @@ import (
 	"io"
 	"math/big"
 	"net"
-	"strconv"
+	// "strconv"
 	"time"
 )
 
@@ -847,8 +847,8 @@ func parseSANExtension(value []byte) (dnsNames, emailAddresses []string, ipAddre
 			case net.IPv4len, net.IPv6len:
 				ipAddresses = append(ipAddresses, v.Bytes)
 			default:
-				err = errors.New("x509: certificate contained IP address of length " + strconv.Itoa(len(v.Bytes)))
-				return
+				//err = errors.New("x509: certificate contained IP address of length " + strconv.Itoa(len(v.Bytes)))
+				//return
 			}
 		}
 	}
