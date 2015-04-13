@@ -123,11 +123,13 @@ func elasticSearchPut(ch <-chan []byte) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		_, err = ioutil.ReadAll(response.Body)
+		body, err := ioutil.ReadAll(response.Body)
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Print(response.Status)
+		if response.StatusCode > 299 {
+			log.Print(response.Status, "\t", body)
+		}
 		response.Body.Close()
 	}
 }
