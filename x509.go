@@ -2008,7 +2008,20 @@ func jsonPublicKey(v interface{}) map[string]interface{} {
 		ret["Parameters"] = parameters
 		ret["Y"] = fmt.Sprintf("%X", pk.Y)
 	case *ecdsa.PublicKey:
-		ret["Curve"] = pk.Curve
+		switch pk.Curve {
+		case elliptic.P224():
+			ret["CurveOID"] = oidNamedCurveP224
+			ret["Curve"] = "P224"
+		case elliptic.P256():
+			ret["CurveOID"] = oidNamedCurveP256
+			ret["Curve"] = "P256"
+		case elliptic.P384():
+			ret["CurveOID"] = oidNamedCurveP384
+			ret["Curve"] = "P384"
+		case elliptic.P521():
+			ret["CurveOID"] = oidNamedCurveP521
+			ret["Curve"] = "P521"
+		}
 		ret["X"] = fmt.Sprintf("%X", pk.X)
 		ret["Y"] = fmt.Sprintf("%X", pk.Y)
 	default:
