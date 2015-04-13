@@ -23,6 +23,8 @@ import (
 	"math/big"
 	"net"
 	// "strconv"
+	"encoding/json"
+	"fmt"
 	"time"
 )
 
@@ -1922,4 +1924,96 @@ func parseCertificateRequest(in *certificateRequest) (*CertificateRequest, error
 	}
 
 	return out, nil
+}
+
+type jsonCertificate struct {
+	Raw                         []byte
+	Signature                   []byte
+	SignatureAlgorithm          SignatureAlgorithm
+	PublicKeyAlgorithm          PublicKeyAlgorithm
+	PublicKey                   map[string]interface{}
+	Version                     int
+	SerialNumber                string
+	Issuer                      pkix.Name
+	Subject                     pkix.Name
+	NotBefore, NotAfter         time.Time // Validity bounds.
+	KeyUsage                    KeyUsage
+	Extensions                  []pkix.Extension
+	ExtKeyUsage                 []ExtKeyUsage           // Sequence of extended key usages.
+	UnknownExtKeyUsage          []asn1.ObjectIdentifier // Encountered extended key usages unknown to this package.
+	BasicConstraintsValid       bool                    // if true then the next two fields are valid.
+	IsCA                        bool
+	MaxPathLen                  int
+	MaxPathLenZero              bool
+	SubjectKeyId                []byte
+	AuthorityKeyId              []byte
+	OCSPServer                  []string
+	IssuingCertificateURL       []string
+	DNSNames                    []string
+	EmailAddresses              []string
+	IPAddresses                 []net.IP
+	PermittedDNSDomainsCritical bool // if true then the name constraints are marked critical.
+	PermittedDNSDomains         []string
+	CRLDistributionPoints       []string
+	PolicyIdentifiers           []asn1.ObjectIdentifier
+}
+
+func (c *Certificate) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&jsonCertificate{
+		c.Raw,
+		c.Signature,
+		c.SignatureAlgorithm,
+		c.PublicKeyAlgorithm,
+		jsonPublicKey(c.PublicKey),
+		c.Version,
+		c.SerialNumber.String(),
+		c.Issuer,
+		c.Subject,
+		c.NotBefore,
+		c.NotAfter,
+		c.KeyUsage,
+		c.Extensions,
+		c.ExtKeyUsage,
+		c.UnknownExtKeyUsage,
+		c.BasicConstraintsValid,
+		c.IsCA,
+		c.MaxPathLen,
+		c.MaxPathLenZero,
+		c.SubjectKeyId,
+		c.AuthorityKeyId,
+		c.OCSPServer,
+		c.IssuingCertificateURL,
+		c.DNSNames,
+		c.EmailAddresses,
+		c.IPAddresses,
+		c.PermittedDNSDomainsCritical,
+		c.PermittedDNSDomains,
+		c.CRLDistributionPoints,
+		c.PolicyIdentifiers,
+	})
+}
+
+func jsonPublicKey(v interface{}) map[string]interface{} {
+	ret := make(map[string]interface{})
+
+	switch pk := v.(type) {
+	case *rsa.PublicKey:
+		ret["N"] = fmt.Sprintf("%X", pk.N)
+		ret["E"] = pk.E
+	case *dsa.PublicKey:
+		parameters := make(map[string]string)
+		parameters["P"] = fmt.Sprintf("%X", pk.Parameters.P)
+		parameters["Q"] = fmt.Sprintf("%X", pk.Parameters.Q)
+		parameters["G"] = fmt.Sprintf("%X", pk.Parameters.G)
+		ret["Parameters"] = parameters
+		ret["Y"] = fmt.Sprintf("%X", pk.Y)
+	case *ecdsa.PublicKey:
+		ret["Curve"] = pk.Curve
+		ret["X"] = fmt.Sprintf("%X", pk.X)
+		ret["Y"] = fmt.Sprintf("%X", pk.Y)
+	default:
+		ret["Error"] = "Unknown Public Key Type"
+	}
+
+	return ret
 }
