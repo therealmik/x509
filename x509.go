@@ -12,7 +12,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rsa"
-	"crypto/sha1"
+	"github.com/therealmik/detectcoll/sha1"
 	_ "crypto/sha256"
 	_ "crypto/sha512"
 	"crypto/x509/pkix"
